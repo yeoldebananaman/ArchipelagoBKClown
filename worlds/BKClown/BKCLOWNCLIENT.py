@@ -78,7 +78,7 @@ async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
         if not os.path.exists(path):
             with open(path, "w") as f:
                 f.write("[]\n")
-
+        ctx.finished_game = False
         ctx.FruitProgressiveChild = 9
         ctx.LemonadeProgressiveChild = 9
         ctx.LemonAdded = args["slot_data"]["LemonAdded"]
@@ -230,7 +230,6 @@ async def game_watcher(ctx:BKClownContext):
 
         await asyncio.sleep(1.0)
 
-def main():
     Utils.init_logging("BKCLOWNCLIENT", exception_logger="Client")
     async def _main():
         parser = get_base_parser(description="BKClown Client, for text interfacing.")   
