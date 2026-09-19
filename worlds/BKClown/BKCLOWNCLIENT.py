@@ -230,6 +230,7 @@ async def game_watcher(ctx:BKClownContext):
 
         await asyncio.sleep(1.0)
 
+def main():
     Utils.init_logging("BKCLOWNCLIENT", exception_logger="Client")
     async def _main():
         parser = get_base_parser(description="BKClown Client, for text interfacing.")   
