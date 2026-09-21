@@ -74,8 +74,6 @@ async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
     ctx.finished_game = False
     if cmd == 'Connected':
         
-        print(ctx.ready_to_read)
-
         path = os.path.expandvars(r"%appdata%\MMFApplications\BKClown")
         startlines = []
         ctx.finished_game = False
@@ -98,9 +96,8 @@ async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
             
         with open (path, 'r') as f:
             startlines = f.readlines()
-            print("readlines")
+
         if startlines:
-            print("hihi")
             ctx.ready_to_read = True
                 
     elif cmd == 'ReceivedItems':
@@ -186,7 +183,6 @@ async def game_watcher(ctx:BKClownContext):
         await asyncio.sleep(0.1)
 
     while not ctx.exit_event.is_set():
-        print("woahbananas")
         locationcheck = []
         linesread = ""
         victory = False
@@ -241,7 +237,6 @@ async def game_watcher(ctx:BKClownContext):
             await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
             ctx.finished_game = True
             ctx.ready_to_read = False
-            print(ctx.ready_to_read)
 
 
         await asyncio.sleep(1.0)
