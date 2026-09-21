@@ -33,7 +33,6 @@ class BKClownContext(CommonContext):
  
     def __init__(self, server_adress, password):
         super().__init__(server_adress, password)
-        self.syncing = False
         self.FruitProgressiveChild = 0
         self.LemonadeProgressiveChild = 0
         self.game = 'BKClown'
@@ -150,7 +149,7 @@ async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
                     lemonadechildcount = sum(1 for itm in ctx.items_received if itm.item == 2)
     
                     if lemonadechildcount >= ctx.LemonadeProgressiveChild:
-                        fruitchildcount = ctx.LemonadeProgressiveChild
+                        lemonadechildcount = ctx.LemonadeProgressiveChild
 
                 for i in range(fruitchildcount):
                     childrentoappend.append("progressivekid" + str(i) + "=1\n")
@@ -186,15 +185,7 @@ async def game_watcher(ctx:BKClownContext):
         locationcheck = []
         linesread = ""
         victory = False
-                    
-        if ctx.syncing:
-            sync_msg = [{'cmd': 'Sync'}]
-            if ctx.locations_checked:
-                sync_msg.append({"cmd": "LocationChecks", "locations": list(ctx.locations_checked)})
-                
-            await ctx.send_msgs(sync_msg)
-            ctx.syncing = False
-            
+
         if os.path.exists(path):
                 
                 try:
@@ -204,27 +195,40 @@ async def game_watcher(ctx:BKClownContext):
                 except IOError:
                     pass
 
+                unaddedscore = []
                 for scores in scorescheck:
-                    if f"highscore={scores}" in linesread and not linesread.__contains__("highscore=0"):
+                    if f"highscore={scores}" in linesread or f"previousscore={scores}" in linesread:
                         match = scores // 200
                         locationcheck.append(match)
-
+                        for checkbelow in unaddedscore:
+                            if checkbelow <= scores:
+                                lowerscores = checkbelow // 200
+                                locationcheck.append(lowerscores)
+                            
                     if f"highscore=0" in linesread or f"previousscore=0" in linesread:
                         locationcheck.append(int(100))
 
                     if linesread.__contains__("highscore=11800"):
                         locationcheck.append(int(9))
+                    unaddedscore.append(scores)
+    
                 if linesread.__contains__("lemonadeunlocked=1"):
+                    unaddedscore = []
                     for scores in lemonscores:
 
                         if f"lemonadehighscore=0" in linesread or f"previouslemonadescore=0" in linesread:
                             locationcheck.append(101)
                         
-                        if f"lemonadehighscore={scores}" in linesread:
+                        if f"lemonadehighscore={scores}" in linesread or f"previouslemonadescore={scores}" in linesread:
                             locationcheck.append(scores)
+                            for checkbelow in unaddedscore:
+                                if checkbelow <= scores:
+                                    locationcheck.append(checkbelow)
+                        unaddedscore.append(scores)
 
                         if linesread.__contains__("highscore=11800") and linesread.__contains__("lemonadehighscore=6350"):
                             victory = True
+
                 elif linesread.__contains__("lemonadeunlocked=NEVER"):
                     if linesread.__contains__("highscore=11800"):
                         victory = True
