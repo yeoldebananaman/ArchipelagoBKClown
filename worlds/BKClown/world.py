@@ -47,5 +47,6 @@ class BKClownWorld(World):
     def fill_slot_data(self) -> Mapping[str, Any]:
 
         return self.options.as_dict(
-            "LemonAdded"
+            "LemonAdded", 
+            "SLWH"
         )

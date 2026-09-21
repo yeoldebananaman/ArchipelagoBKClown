@@ -38,6 +38,7 @@ class BKClownContext(CommonContext):
         self.game = 'BKClown'
         self.finished_game = False
         self.ready_to_read = False
+        self.SLWH = False
 
     def on_package(self, cmd: str, args: dict):
         asyncio.create_task(process_bkclown_stuff(self, cmd, args))
@@ -80,6 +81,7 @@ async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
         ctx.LemonadeProgressiveChild = 9
         ctx.LemonAdded = args["slot_data"]["LemonAdded"]
         ctx.ready_to_read = False
+        ctx.SLWH = args["slot_data"]["SLWH"]
 
         if os.path.exists(path):
             os.remove(path)
@@ -153,16 +155,21 @@ async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
 
                 for i in range(fruitchildcount):
                     childrentoappend.append("progressivekid" + str(i) + "=1\n")
+
                 for i in range(lemonadechildcount):
                     childrentoappend.append("progressivelemonadekid" + str(i) + "=1\n")
+
                 if lemonadded:
                     if not existinglines.__contains__("lemonadeunlocked"):
                         childrentoappend.append("lemonadeunlocked=1\n")
                         childrentoappend.append("previouslemonadescore=0\n")
                         childrentoappend.append("lemonadehighscore=0\n")
+
                 elif ctx.LemonAdded == False:
                     childrentoappend.append("lemonadeunlocked=NEVER\n")
+
                 lastappend = []
+                
                 for line in childrentoappend:
                     if line.strip() not in existinglines:
                         lastappend.append(line)
@@ -184,7 +191,7 @@ async def game_watcher(ctx:BKClownContext):
     while not ctx.exit_event.is_set():
         locationcheck = []
         linesread = ""
-        victory = False
+        victory = False 
 
         if os.path.exists(path):
                 
@@ -200,10 +207,11 @@ async def game_watcher(ctx:BKClownContext):
                     if f"highscore={scores}" in linesread or f"previousscore={scores}" in linesread:
                         match = scores // 200
                         locationcheck.append(match)
-                        for checkbelow in unaddedscore:
-                            if checkbelow <= scores:
-                                lowerscores = checkbelow // 200
-                                locationcheck.append(lowerscores)
+                        if ctx.SLWH:
+                            for checkbelow in unaddedscore:
+                                if checkbelow <= scores:
+                                    lowerscores = checkbelow // 200
+                                    locationcheck.append(lowerscores)
                             
                     if f"highscore=0" in linesread or f"previousscore=0" in linesread:
                         locationcheck.append(int(100))
@@ -221,9 +229,10 @@ async def game_watcher(ctx:BKClownContext):
                         
                         if f"lemonadehighscore={scores}" in linesread or f"previouslemonadescore={scores}" in linesread:
                             locationcheck.append(scores)
-                            for checkbelow in unaddedscore:
-                                if checkbelow <= scores:
-                                    locationcheck.append(checkbelow)
+                            if ctx.SLWH:
+                                for checkbelow in unaddedscore:
+                                    if checkbelow <= scores:
+                                        locationcheck.append(checkbelow)
                         unaddedscore.append(scores)
 
                         if linesread.__contains__("highscore=11800") and linesread.__contains__("lemonadehighscore=6350"):
