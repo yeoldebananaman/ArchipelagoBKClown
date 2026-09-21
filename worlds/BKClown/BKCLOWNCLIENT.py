@@ -37,6 +37,8 @@ class BKClownContext(CommonContext):
         self.FruitProgressiveChild = 0
         self.LemonadeProgressiveChild = 0
         self.game = 'BKClown'
+        self.finished_game = False
+        self.ready_to_read = False
 
     def on_package(self, cmd: str, args: dict):
         asyncio.create_task(process_bkclown_stuff(self, cmd, args))
@@ -68,30 +70,38 @@ async def main(args):
     await ctx.shutdown()
 
 async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
+    ctx.locations_checked = []
+    ctx.finished_game = False
     if cmd == 'Connected':
+        
+        print(ctx.ready_to_read)
 
         path = os.path.expandvars(r"%appdata%\MMFApplications\BKClown")
-
-        if os.path.exists(path):
-            with open(path, "w") as f:
-                f.write("[]\n")
-        if not os.path.exists(path):
-            with open(path, "w") as f:
-                f.write("[]\n")
+        startlines = []
         ctx.finished_game = False
         ctx.FruitProgressiveChild = 9
         ctx.LemonadeProgressiveChild = 9
         ctx.LemonAdded = args["slot_data"]["LemonAdded"]
+        ctx.ready_to_read = False
+
+        if os.path.exists(path):
+            os.remove(path)
         
-        if os.path.exists(os.path.expandvars(r"%appdata%\MMFApplications\BKClown")):
-            with open(path, "w") as f:
-                f.write(
-                    "[]\n"
-                    "fruitpunchunlocked=1\n"
-                    "perfectscore=0\n"
-                    "previousscore=0\n" 
-                    "highscore=0\n"      
-                    )
+        with open(path, "w") as f:
+            f.write(
+                "[]\n"
+                "fruitpunchunlocked=1\n"
+                "perfectscore=0\n"
+                "previousscore=0\n" 
+                "highscore=0\n"      
+                )
+            
+        with open (path, 'r') as f:
+            startlines = f.readlines()
+            print("readlines")
+        if startlines:
+            print("hihi")
+            ctx.ready_to_read = True
                 
     elif cmd == 'ReceivedItems':
 
@@ -170,9 +180,17 @@ async def game_watcher(ctx:BKClownContext):
     scorescheck = [0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 11800]
     lemonscores = [150, 300, 450, 600, 750, 900, 1050, 1200, 6350]
     path = os.path.expandvars(r"%appdata%\MMFApplications\BKClown")
+    ctx.locations_checked = []
+
+    while not ctx.ready_to_read:
+        await asyncio.sleep(0.1)
 
     while not ctx.exit_event.is_set():
-
+        print("woahbananas")
+        locationcheck = []
+        linesread = ""
+        victory = False
+                    
         if ctx.syncing:
             sync_msg = [{'cmd': 'Sync'}]
             if ctx.locations_checked:
@@ -180,11 +198,7 @@ async def game_watcher(ctx:BKClownContext):
                 
             await ctx.send_msgs(sync_msg)
             ctx.syncing = False
-
-        locationcheck = []
-        linesread = ""
-        victory = False
-
+            
         if os.path.exists(path):
                 
                 try:
@@ -218,18 +232,20 @@ async def game_watcher(ctx:BKClownContext):
                 elif linesread.__contains__("lemonadeunlocked=NEVER"):
                     if linesread.__contains__("highscore=11800"):
                         victory = True
+  
+        ctx.locations_checked = locationcheck
+        message = [{"cmd": 'LocationChecks', "locations": locationcheck}]
+        await ctx.send_msgs(message)
 
-        if not ctx.finished_game and victory:
+        if not ctx.finished_game and victory and ctx.ready_to_read:
             await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
             ctx.finished_game = True
+            ctx.ready_to_read = False
+            print(ctx.ready_to_read)
 
-        if locationcheck != set(ctx.locations_checked):           
-            ctx.locations_checked = locationcheck
-            message = [{"cmd": 'LocationChecks', "locations": locationcheck}]
-            await ctx.send_msgs(message)
 
         await asyncio.sleep(1.0)
-
+    
 def main():
     Utils.init_logging("BKCLOWNCLIENT", exception_logger="Client")
     async def _main():
