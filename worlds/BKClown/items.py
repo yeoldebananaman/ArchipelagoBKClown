@@ -36,15 +36,21 @@ def create_item_with_correct_classification(world: BKClownWorld, name: str) -> B
 
 
 def create_all_items(world: BKClownWorld) -> None:
+
     itempool: list[Item] = []
-    for i in range(9):
+
+    for i in range(10):
         if i == 0:
             pass
         else:
             itempool.append(world.create_item("FruitProgressiveChild"))
+
     if world.options.LemonAdded:
-        for i in range(9):
-            itempool.append(world.create_item("LemonadeProgressiveChild"))
+        for i in range(10):
+            if i == 0:
+                pass
+            else:    
+                itempool.append(world.create_item("LemonadeProgressiveChild"))
         itempool.append(world.create_item("LemonClownAccess"))
 
     number_of_items = len(itempool)

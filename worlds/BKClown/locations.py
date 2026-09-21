@@ -36,29 +36,42 @@ class BKClownLocation(Location):
 
 
 def get_location_names_with_ids(location_names: list[str]) -> dict[str, int | None]:
+
     return {location_name: LOCATION_NAME_TO_ID[location_name] for location_name in location_names}
     
 
 def create_all_locations(world: BKClownWorld) -> None:
+
     create_regular_locations(world)
     create_events(world)
 
 
 
 def create_regular_locations(world: BKClownWorld) -> None:
+
     FirstClown = world.get_region("FirstClown")
     FirstCheck = BKClownLocation(world.player, "Surprise 0 Fruit Child", world.location_name_to_id["Surprise 0 Fruit Child"], FirstClown)
     FirstClown.locations.append(FirstCheck)
-    for i in range(9):
-            beelatro = f"Surprise {i + 1} Fruit Child"
+
+    for i in range(10):
+        if i == 0:
+            pass
+        else:
+            beelatro = f"Surprise {i} Fruit Child"
             loc = BKClownLocation(world.player,beelatro, world.location_name_to_id[beelatro], FirstClown)
             FirstClown.locations.append(loc)
+
     if world.options.LemonAdded:
+        
         SecondClown = world.get_region("SecondClown")
         First2Check = BKClownLocation(world.player, "Surprise 0 Lemonade Child", world.location_name_to_id["Surprise 0 Lemonade Child"], SecondClown)
         SecondClown.locations.append(First2Check)
-        for i in range(9):
-                beelatro = f"Surprise {i + 1} Lemonade Child"
+
+        for i in range(10):
+            if i == 0:
+                pass
+            else:
+                beelatro = f"Surprise {i} Lemonade Child"
                 loc = BKClownLocation(world.player,beelatro, world.location_name_to_id[beelatro], SecondClown)
                 SecondClown.locations.append(loc)
 
