@@ -15,11 +15,6 @@ class BKClownWorld(World):
 
     game = "BKClown"
 
-    item_name_groups = {
-    "FruitProgressiveChild": ["FruitProgressiveChild"],
-    "LemonadeProgressiveChild": ["LemonadeProgressiveChild"],
-    "LemonClownAccess": ["LemonClownAccess"]
-    }
     options_dataclass = BKClown_options.BKClownOptions
     options: BKClown_options.BKClownOptions
 

@@ -39,7 +39,6 @@ class BKClownContext(CommonContext):
         self.finished_game = False
         self.ready_to_read = False
         self.SLWH = False
-
     def on_package(self, cmd: str, args: dict):
         asyncio.create_task(process_bkclown_stuff(self, cmd, args))
 
@@ -73,6 +72,7 @@ async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
     ctx.locations_checked = []
     ctx.finished_game = False
     if cmd == 'Connected':
+        ctx.locations_checked = []
         
         path = os.path.expandvars(r"%appdata%\MMFApplications\BKClown")
         startlines = []
@@ -82,6 +82,7 @@ async def process_bkclown_stuff(ctx: BKClownContext, cmd: str, args: dict):
         ctx.LemonAdded = args["slot_data"]["LemonAdded"]
         ctx.ready_to_read = False
         ctx.SLWH = args["slot_data"]["SLWH"]
+
 
         if os.path.exists(path):
             os.remove(path)
@@ -189,68 +190,67 @@ async def game_watcher(ctx:BKClownContext):
         await asyncio.sleep(0.1)
 
     while not ctx.exit_event.is_set():
+        ctx.locations_checked = []
         locationcheck = []
         linesread = ""
         victory = False 
 
-        if os.path.exists(path):
-                
-                try:
-                    with open(path, "r") as f:
-                        linesread = f.read()
+        if os.path.exists(path) and ctx.ready_to_read: 
+            try:
+                with open(path, "r") as f:
+                    linesread = f.read()
 
-                except IOError:
-                    pass
+            except IOError:
+                pass
 
+            unaddedscore = []
+            for scores in scorescheck:
+                if f"highscore={scores}" in linesread or f"previousscore={scores}" in linesread:
+                    match = scores // 200
+                    locationcheck.append(match)
+                    if ctx.SLWH:
+                        for checkbelow in unaddedscore:
+                            if checkbelow <= scores:
+                                lowerscores = checkbelow // 200
+                                locationcheck.append(lowerscores)
+                            
+                if f"highscore=0" in linesread or f"previousscore=0" in linesread:  
+                    locationcheck.append(int(100))
+
+                if linesread.__contains__("highscore=11800"):
+                    locationcheck.append(int(9))
+                unaddedscore.append(scores)
+    
+            if linesread.__contains__("lemonadeunlocked=1"):
                 unaddedscore = []
-                for scores in scorescheck:
-                    if f"highscore={scores}" in linesread or f"previousscore={scores}" in linesread:
-                        match = scores // 200
-                        locationcheck.append(match)
+                for scores in lemonscores:
+
+                    if f"lemonadehighscore=0" in linesread or f"previouslemonadescore=0" in linesread:
+                        locationcheck.append(101)
+                        
+                    if f"lemonadehighscore={scores}" in linesread or f"previouslemonadescore={scores}" in linesread:
+                        locationcheck.append(scores)
                         if ctx.SLWH:
                             for checkbelow in unaddedscore:
                                 if checkbelow <= scores:
-                                    lowerscores = checkbelow // 200
-                                    locationcheck.append(lowerscores)
-                            
-                    if f"highscore=0" in linesread or f"previousscore=0" in linesread:
-                        locationcheck.append(int(100))
-
-                    if linesread.__contains__("highscore=11800"):
-                        locationcheck.append(int(9))
+                                    locationcheck.append(checkbelow)
                     unaddedscore.append(scores)
-    
-                if linesread.__contains__("lemonadeunlocked=1"):
-                    unaddedscore = []
-                    for scores in lemonscores:
 
-                        if f"lemonadehighscore=0" in linesread or f"previouslemonadescore=0" in linesread:
-                            locationcheck.append(101)
-                        
-                        if f"lemonadehighscore={scores}" in linesread or f"previouslemonadescore={scores}" in linesread:
-                            locationcheck.append(scores)
-                            if ctx.SLWH:
-                                for checkbelow in unaddedscore:
-                                    if checkbelow <= scores:
-                                        locationcheck.append(checkbelow)
-                        unaddedscore.append(scores)
-
-                        if linesread.__contains__("highscore=11800") and linesread.__contains__("lemonadehighscore=6350"):
-                            victory = True
-
-                elif linesread.__contains__("lemonadeunlocked=NEVER"):
-                    if linesread.__contains__("highscore=11800"):
+                    if linesread.__contains__("highscore=11800") and linesread.__contains__("lemonadehighscore=6350"):
                         victory = True
-  
-        ctx.locations_checked = locationcheck
-        message = [{"cmd": 'LocationChecks', "locations": locationcheck}]
-        await ctx.send_msgs(message)
 
-        if not ctx.finished_game and victory and ctx.ready_to_read:
-            await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
-            ctx.finished_game = True
-            ctx.ready_to_read = False
+            elif linesread.__contains__("lemonadeunlocked=NEVER"):
+                if linesread.__contains__("highscore=11800"):
+                    victory = True
 
+            ctx.locations_checked = locationcheck
+            message = [{"cmd": 'LocationChecks', "locations": ctx.locations_checked}]
+            await ctx.send_msgs(message)
+
+            if not ctx.finished_game and victory and ctx.ready_to_read:
+                    await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
+                    ctx.finished_game = True
+                    ctx.ready_to_read = False
 
         await asyncio.sleep(1.0)
     
