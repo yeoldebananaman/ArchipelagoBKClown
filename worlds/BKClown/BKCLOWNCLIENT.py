@@ -186,16 +186,22 @@ async def game_watcher(ctx:BKClownContext):
     path = os.path.expandvars(r"%appdata%\MMFApplications\BKClown")
     ctx.locations_checked = []
 
-    while not ctx.ready_to_read:
-        await asyncio.sleep(0.1)
-
     while not ctx.exit_event.is_set():
         ctx.locations_checked = []
         locationcheck = []
         linesread = ""
-        victory = False 
+        victory = False
 
-        if os.path.exists(path) and ctx.ready_to_read: 
+
+        if ctx.server and ctx.server.socket:
+            letsago = True
+        else:
+            if os.path.exists(path):
+                os.remove(path)
+            letsago = False
+
+
+        if os.path.exists(path) and letsago == ctx.ready_to_read: 
             try:
                 with open(path, "r") as f:
                     linesread = f.read()
@@ -242,15 +248,16 @@ async def game_watcher(ctx:BKClownContext):
             elif linesread.__contains__("lemonadeunlocked=NEVER"):
                 if linesread.__contains__("highscore=11800"):
                     victory = True
-
-            ctx.locations_checked = locationcheck
-            message = [{"cmd": 'LocationChecks', "locations": ctx.locations_checked}]
-            await ctx.send_msgs(message)
+            if locationcheck:
+                ctx.locations_checked = locationcheck
+                message = [{"cmd": 'LocationChecks', "locations": ctx.locations_checked}]
+                await ctx.send_msgs(message)
 
             if not ctx.finished_game and victory and ctx.ready_to_read:
                     await ctx.send_msgs([{"cmd": "StatusUpdate", "status": ClientStatus.CLIENT_GOAL}])
                     ctx.finished_game = True
                     ctx.ready_to_read = False
+                    letsago = False
 
         await asyncio.sleep(1.0)
     
