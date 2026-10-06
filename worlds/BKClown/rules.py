@@ -33,15 +33,15 @@ def set_all_location_rules(world: BKClownWorld) -> None:
         if world.options.LemonAdded:
                 for i in range(10):
                     LemonLoc = world.get_location( f"Surprise {i} Lemonade Child")
-                    world.set_rule(LemonLoc, Has("LemonadeProgressiveChild", count=i) | Has("LemonClownAccess"))
+                    world.set_rule(LemonLoc, Has("LemonadeProgressiveChild", count=i) & Has("LemonClownAccess"))
 
 
 
 def set_completion_condition(world: BKClownWorld) -> None:
     if world.options.LemonAdded:
         world.set_completion_rule(
-            Has("FruitProgressiveChild", count=8) |
-            Has("LemonadeProgressiveChild", count=8) |
+            Has("FruitProgressiveChild", count=8) &
+            Has("LemonadeProgressiveChild", count=8) &
             Has("LemonClownAccess", world.player)
         )
     else:
